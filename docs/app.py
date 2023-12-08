@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, render_template_string, render_template
+from flask import Flask, request, redirect, session, render_template, url_for
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import google.oauth2.credentials
@@ -11,29 +11,13 @@ app = Flask(__name__, static_folder='static')
 
 app.secret_key = 'Quadrotor2017'
 
-# Set up the OAuth 2.0 flow
 flow = Flow.from_client_secrets_file(
     'misc/client_secret.json',  
-    scopes=['https://www.googleapis.com/auth/calendar'],
+    scopes=[
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.settings.readonly'
+    ],
     redirect_uri='http://localhost:5000/authorize')
-
-@app.route('/')
-def index():
-    authorization_url, state = flow.authorization_url()
-    session['state'] = state
-    return render_template('index.html', auth_url=authorization_url)
-
-@app.route('/authorize')
-def authorize():
-    flow.fetch_token(authorization_response=request.url)
-    
-    if not session['state'] == request.args['state']:
-        return 'State does not match!', 500
-
-    credentials = flow.credentials
-    session['credentials'] = credentials_to_dict(credentials)
-
-    return redirect('/submit-booking')
 
 def is_overlapping(start_time, end_time, service):
     events_result = service.events().list(
@@ -47,12 +31,11 @@ def is_overlapping(start_time, end_time, service):
     return len(events) > 0
 
 def count_monthly_events(email, service):
-    # Get the first and last day of the current month
     now = datetime.now()
     first_day_of_month = datetime(now.year, now.month, 1)
     last_day_of_month = datetime(now.year, now.month, calendar.monthrange(now.year, now.month)[1])
 
-    # Convert to timezone-aware datetime
+    # Convert timezone 
     la_timezone = pytz.timezone('America/Los_Angeles')
     start_of_month = la_timezone.localize(first_day_of_month)
     end_of_month = la_timezone.localize(last_day_of_month)
@@ -68,11 +51,45 @@ def count_monthly_events(email, service):
     # Count events created by the given email
     events = events_result.get('items', [])
     return sum(1 for event in events if any(attendee.get('email') == email for attendee in event.get('attendees', [])))
-    
+
+def has_edit_permissions(email, service, calendar_id='primary'):
+    try:
+        acl = service.acl().list(calendarId=calendar_id).execute()
+        for entry in acl['items']:
+            if entry.get('scope', {}).get('type') == 'user' and entry['scope']['value'] == email:
+                role = entry.get('role')
+                return role in ['owner', 'writer']  
+        return False
+    except Exception as e:
+        print(f"Error checking permissions: {e}")
+        return False
+
+@app.route('/')
+def index():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('index.html', auth_url=authorization_url)
+
+@app.route('/authorize')
+def google_authorize():
+    state = session['state']
+    flow.fetch_token(authorization_response=request.url)
+
+    credentials = flow.credentials
+    session['credentials'] = credentials_to_dict(credentials)
+
+    return redirect(url_for('submit_booking'))  
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route('/submit-booking', methods=['GET', 'POST'])
 def submit_booking():
     if 'credentials' not in session:
+        if 'X-Requested-With' in request.headers and request.headers['X-Requested-With'] == 'XMLHttpRequest':
+            return "Please login to submit a booking."
         return redirect('/')
 
     if request.method == 'POST':
@@ -86,28 +103,28 @@ def submit_booking():
         start_time = request.form['start-time']
         end_time = request.form['end-time']
 
-        # Create a timezone object for Los Angeles
+        # Create a timezone
         la_timezone = pytz.timezone('America/Los_Angeles')
 
-        # Parse the date and time from the form
         start_datetime = la_timezone.localize(datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M"))
         end_datetime = la_timezone.localize(datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M"))
 
-        # Format the start and end datetimes in the required format
+        # Format the start and end datetimes
         start_datetime_str = start_datetime.isoformat()
         end_datetime_str = end_datetime.isoformat()
 
-        # Check for overlapping events
         if is_overlapping(start_datetime, end_datetime, service):
             return "There is already an event scheduled for this time. Please choose another time."
         
         if count_monthly_events(email, service) >= 10:
             return "You have exceeded your monthly limit of event creation."
+        
+        if not has_edit_permissions(email, service):
+            return "You do not have permission to create events in this calendar."
 
-        # Define the event with formatted start and end times
         event = {
             'summary': title,
-            'description': f"Name: {name}, Email: {email}",
+            'description': f"Title: {title}\nName: {name}\nEmail: {email}",
             'start': {
                 'dateTime': start_datetime_str,
                 'timeZone': 'America/Los_Angeles',
@@ -120,20 +137,10 @@ def submit_booking():
         }
 
         created_event = service.events().insert(calendarId='primary', body=event).execute()
-        return f"Event created: {created_event.get('htmlLink')}"
+        return "Thank you! Your event has been created successfully."
 
     # HTML form for booking
-    return render_template_string('''
-        <form method="post">
-            Name: <input type="text" name="name"><br>
-            Email: <input type="email" name="email"><br>
-            Event Title: <input type="text" name="title"><br>
-            Date: <input type="date" name="date"><br>
-            Start Time: <input type="time" name="start-time"><br>
-            End Time: <input type="time" name="end-time"><br>
-            <input type="submit" value="Book">
-        </form>
-    ''')
+    return render_template('index.html')
 
 def credentials_to_dict(credentials):
     return {
