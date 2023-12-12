@@ -1,23 +1,22 @@
-from flask import Flask, request, redirect, session, render_template, url_for
+from flask import Flask, request, redirect, session, render_template, url_for, jsonify
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import google.oauth2.credentials
+from googleapiclient.errors import HttpError
 from datetime import datetime, timezone
-import calendar
-import pytz
+import os, calendar, pytz
 
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__)
+app.secret_key = 'Aerodrome'
+ourCalendarID = 'c_445aaa2587b481d14101c32aef221cd16f8a071b4bfdddbb76580d66d7953073@group.calendar.google.com'
 
-app.secret_key = 'Quadrotor2017'
-
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+CLIENT_SECRETS_FILE = "misc/client_secret.json"
+SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.email', 'openid']
 flow = Flow.from_client_secrets_file(
-    'misc/client_secret.json',  
-    scopes=[
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/calendar.settings.readonly'
-    ],
-    redirect_uri='http://localhost:5000/authorize')
+    CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri='http://localhost:5000/authorize')
+
 
 def is_overlapping(start_time, end_time, service):
     events_result = service.events().list(
@@ -70,32 +69,52 @@ def index():
     session['state'] = state
     return render_template('index.html', auth_url=authorization_url)
 
+
 @app.route('/authorize')
-def google_authorize():
-    state = session['state']
-    flow.fetch_token(authorization_response=request.url)
+def authorize():
+    try:
+        flow.fetch_token(authorization_response=request.url)
 
-    credentials = flow.credentials
-    session['credentials'] = credentials_to_dict(credentials)
+        if not session['state'] == request.args['state']:
+            return 'State does not match!', 400
 
-    return redirect(url_for('submit_booking'))  
+        credentials = flow.credentials
+        session['credentials'] = credentials_to_dict(credentials)
+
+        # Get user info and store email in session
+        userinfo_service = build('oauth2', 'v2', credentials=credentials)
+        try:
+            user_info = userinfo_service.userinfo().get().execute()
+            session['email'] = user_info.get('email')
+        except HttpError as e:
+            # Handle error
+            print(f"Error fetching user info: {e}")
+            return jsonify({'error': 'Failed to fetch user information.'}), 500
+
+        return redirect(url_for('index'))
+    
+    except Exception as e:
+        print(f"Error during authorization: {e}")
+        return "An error occurred during authorization.", 500
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.route('/submit-booking', methods=['GET', 'POST'])
-def submit_booking():
+@app.route('/create-event', methods=['POST'])
+def create_event():
     if 'credentials' not in session:
-        if 'X-Requested-With' in request.headers and request.headers['X-Requested-With'] == 'XMLHttpRequest':
-            return "Please login to submit a booking."
-        return redirect('/')
+        return jsonify({'error': 'Not authorized'}), 401
 
     if request.method == 'POST':
         credentials = google.oauth2.credentials.Credentials(**session['credentials'])
         service = build('calendar', 'v3', credentials=credentials)
-
+        
+        user_email = session.get('email')
+        if not user_email:
+            return jsonify({'error': 'User email not found in session.'}), 401
+        
         name = request.form['name']
         email = request.form['email']
         title = request.form['title']
@@ -113,15 +132,27 @@ def submit_booking():
         start_datetime_str = start_datetime.isoformat()
         end_datetime_str = end_datetime.isoformat()
 
-        if is_overlapping(start_datetime, end_datetime, service):
-            return "There is already an event scheduled for this time. Please choose another time."
-        
-        if count_monthly_events(email, service) >= 10:
-            return "You have exceeded your monthly limit of event creation."
-        
-        if not has_edit_permissions(email, service):
-            return "You do not have permission to create events in this calendar."
+        try:
+            acl = service.acl().list(calendarId=ourCalendarID).execute()
+        except HttpError as e:
+            if e.resp.status == 403:
+                return jsonify({'error': 'no_permission', 'message': 'You do not have permission to access the calendar.'}), 403
+            else:
+                return jsonify({'error': 'unknown_error', 'message': 'An unknown error occurred.'}), 500
 
+        # Check if the user has the necessary permissions
+        has_permission = False
+        for entry in acl['items']:
+            if entry['scope']['type'] == 'user' and entry['scope']['value'] == user_email:
+                if entry['role'] in ['owner', 'writer']:
+                    has_permission = True
+                    break
+
+        if not has_permission:
+            return jsonify({'error': 'You do not have permission to create events on this calendar.'}), 403
+
+
+        data = request.json
         event = {
             'summary': title,
             'description': f"Title: {title}\nName: {name}\nEmail: {email}",
@@ -135,11 +166,10 @@ def submit_booking():
             },
             'attendees': [{'email': email}],
         }
-
-        created_event = service.events().insert(calendarId='primary', body=event).execute()
-        return "Thank you! Your event has been created successfully."
-
-    # HTML form for booking
+        
+        event = service.events().insert(calendarId=ourCalendarID, body=event).execute()
+        return jsonify(event)
+    
     return render_template('index.html')
 
 def credentials_to_dict(credentials):

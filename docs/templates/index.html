@@ -20,27 +20,6 @@
         
         <link rel='stylesheet' id='main-css' href="{{ url_for('static', filename='style.css') }}" type='text/css' media='all' />
         
-
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script>
-            $(document).ready(function(){
-                $('form').submit(function(event){
-                    event.preventDefault(); // Prevent the default form submission
-                    var formData = $(this).serialize(); // Serialize form data
-
-                    $.ajax({
-                        type: 'POST',
-                        url: '/submit-booking',
-                        data: formData,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }, // Add this line to include the custom header
-                        success: function(response){
-                            $('#message').text(response).css('color', 'black');
-                        }
-                    });
-                });
-            });
-        </script>
-
     </head>
     <body data-new-gr-c-s-check-loaded="14.1094.0" data-gr-ext-installed="" style="margin-top: 150px;">
 
@@ -164,7 +143,7 @@
                                                                 </h1>
                                                             </div>
                                                             <div role="form" class="kraftcf">                                                    
-                                                                <form action="/submit-booking" method="post" class="kraftcf-form">                                                       
+                                                                <form action="/create-event" method="post" class="kraftcf-form">                                                       
                                                                     <div class="contact-form-main">
                                                                         <div class="contact-form-fields-wrap clearfix">
                                                                             <div class="contact-form-fields">
@@ -194,7 +173,7 @@
                                                                         </p>
                                                                     </div>
                                                                 </form>
-                                                                <div id="message"></div>
+                                                                <div id="eventCreationMessage"></div>
                                                                 <!-- Login Button -->
                                                                 {% if not session.get('credentials') %}
                                                                 <a href="{{ auth_url }}">Login with Google</a>
@@ -279,6 +258,8 @@
 
         <script type='text/javascript' src="{{url_for('static', filename='assets/js/main.js')}}"></script>        
         <!--  Scripts Ends -->
+
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
         <!-- JavaScript for Toggle Switch -->
         <script>
