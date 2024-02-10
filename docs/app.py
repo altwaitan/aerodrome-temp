@@ -74,14 +74,14 @@ def has_edit_permissions(email, service, calendar_id='primary'):
 def home_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('index.html', auth_url=authorization_url)
+    return render_template('index.html', auth_url=authorization_url, current_page='home')
 
 
 @app.route('/people')
 def people_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('people.html', auth_url=authorization_url)
+    return render_template('people.html', auth_url=authorization_url, current_page='people')
 
 
 @app.route('/register')
