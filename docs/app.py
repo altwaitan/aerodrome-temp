@@ -71,46 +71,42 @@ def has_edit_permissions(email, service, calendar_id='primary'):
 
 
 @app.route('/')
-def index():
+def home_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
     return render_template('index.html', auth_url=authorization_url)
 
 
 @app.route('/people')
-def people():
+def people_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
     return render_template('people.html', auth_url=authorization_url)
 
 
 @app.route('/register')
-def register():
+def register_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
     return render_template('register.html', auth_url=authorization_url)
 
-
-@app.route('/register')
-def register():
+@app.route('/conduct')
+def conduct_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('register.html', auth_url=authorization_url)
+    return render_template('conduct.html', auth_url=authorization_url)
 
-
-@app.route('/register')
-def register():
+@app.route('/instructions')
+def instructions_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('register.html', auth_url=authorization_url)
+    return render_template('conduct.html', auth_url=authorization_url)
 
-
-@app.route('/register')
-def register():
+@app.route('/contact')
+def contact_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('register.html', auth_url=authorization_url)
-
+    return render_template('contact.html', auth_url=authorization_url)
 
 @app.route('/authorize')
 def authorize():
