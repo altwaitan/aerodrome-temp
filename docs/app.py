@@ -88,7 +88,8 @@ def people_page():
 def register_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('register.html', auth_url=authorization_url)
+    return render_template('register.html', auth_url=authorization_url, current_page='register')
+
 
 @app.route('/conduct')
 def conduct_page():
@@ -96,17 +97,20 @@ def conduct_page():
     session['state'] = state
     return render_template('conduct.html', auth_url=authorization_url, current_page='conduct')
 
+
 @app.route('/instructions')
 def instructions_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('conduct.html', auth_url=authorization_url)
+    return render_template('instructions.html', auth_url=authorization_url, current_page='instructions')
+
 
 @app.route('/contact')
 def contact_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
     return render_template('contact.html', auth_url=authorization_url, current_page='contact')
+
 
 @app.route('/authorize')
 def authorize():

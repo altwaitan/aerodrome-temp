@@ -2,10 +2,7 @@
 <html lang="en">
     <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <!-- Document Title -->      
-        <title>
-            {% block title %}
-            {% endblock %}
-        </title>
+        <title>Aerodrome | Contextual Robotics Institute</title>
         <!-- Metas -->      
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="author" content="CaliberThemes">
@@ -24,15 +21,15 @@
         <header id="masthead" class="site-header standard sticky" role="banner" style="position: fixed; top: 0px; transition: top 0.3s ease 0s;">		
             <div class="container">
                 <div id="site-branding">			
-                   <a class="logo-brand" href="index.html">
+                   <a class="logo-brand" href="/">
                         <img class="logo" src="{{ url_for('static', filename='assets/images/logo/logo.png') }}" alt="Logo">					                            
                         <img class="retina-logo" src="{{ url_for('static', filename='assets/images/logo/logo2x.png') }}" alt="Retina Logo">						                            
                     </a>	
                 </div><!-- .site-branding -->
                 <span id="ham-trigger-wrap">
                     <span class="ham-trigger">
-                        <span></span>                            
-                    </span>                            
+                        <span></span>
+                    </span>
                 </span>
                 <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Top Menu">
                     <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Top Menu">
@@ -66,6 +63,20 @@
         {% block content %}
 
         {% endblock content %}
+        {% if current_page != 'contact' %}
+        <div class="row m-t-50 m-b-100">                                    
+            <div class="col-sm-12">
+                <div class="cta style-2">	
+                    <h2>						
+                        Let's work together! 								
+                    </h2>				
+                        <div class="btn-container solid">
+                        <a href="/contact" title="GET IN TOUCH">GET IN TOUCH</a>
+                        </div>				
+               </div>
+            </div>
+        </div>
+    {% endif %}
     <!-- Page Wrapper Ends -->
     <a id="gotoTop" href="/{{current_page}}" class="scroll-top-link" data-easing="easeOutQuad" data-speed="700"><i class="fa fa-angle-up"></i></a>
     <!--  Scripts -->
