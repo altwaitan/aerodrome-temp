@@ -4,6 +4,8 @@ ARG USERNAME=flask
 ARG UID=1000
 
 RUN apt-get update && apt-get install -qqy \
+    apache2 \
+    apache2-dev \
     sudo 
 
 RUN groupadd -g $UID $USERNAME && \
