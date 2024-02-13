@@ -1,0 +1,20 @@
+{
+    "name": "flask",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    "remoteUser": "flask",
+    "workspaceFolder": "/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=delegated",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "donjayamanne.python-extension-pack",
+                "ms-python.autopep8"
+            ]
+        }
+    },
+    "containerEnv": {
+        "FLASK_APP": "/app/docs/app.py",
+        "FLASK_DEBUG": "1"
+    }
+}

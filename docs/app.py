@@ -3,8 +3,10 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import google.oauth2.credentials
 from googleapiclient.errors import HttpError
-from datetime import datetime, timezone
-import os, calendar, pytz
+from datetime import datetime
+import os
+import calendar
+import pytz
 
 
 app = Flask(__name__)
@@ -13,7 +15,8 @@ ourCalendarID = 'c_445aaa2587b481d14101c32aef221cd16f8a071b4bfdddbb76580d66d7953
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 CLIENT_SECRETS_FILE = "misc/client_secret.json"
-SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.email', 'openid']
+SCOPES = ['https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/userinfo.email', 'openid']
 flow = Flow.from_client_secrets_file(
     CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri='http://localhost:5000/authorize')
 
@@ -29,12 +32,14 @@ def is_overlapping(start_time, end_time, service):
 
     return len(events) > 0
 
+
 def count_monthly_events(email, service):
     now = datetime.now()
     first_day_of_month = datetime(now.year, now.month, 1)
-    last_day_of_month = datetime(now.year, now.month, calendar.monthrange(now.year, now.month)[1])
+    last_day_of_month = datetime(
+        now.year, now.month, calendar.monthrange(now.year, now.month)[1])
 
-    # Convert timezone 
+    # Convert timezone
     la_timezone = pytz.timezone('America/Los_Angeles')
     start_of_month = la_timezone.localize(first_day_of_month)
     end_of_month = la_timezone.localize(last_day_of_month)
@@ -51,23 +56,60 @@ def count_monthly_events(email, service):
     events = events_result.get('items', [])
     return sum(1 for event in events if any(attendee.get('email') == email for attendee in event.get('attendees', [])))
 
+
 def has_edit_permissions(email, service, calendar_id='primary'):
     try:
         acl = service.acl().list(calendarId=calendar_id).execute()
         for entry in acl['items']:
             if entry.get('scope', {}).get('type') == 'user' and entry['scope']['value'] == email:
                 role = entry.get('role')
-                return role in ['owner', 'writer']  
+                return role in ['owner', 'writer']
         return False
     except Exception as e:
         print(f"Error checking permissions: {e}")
         return False
 
+
 @app.route('/')
-def index():
+def home_page():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
-    return render_template('index.html', auth_url=authorization_url)
+    return render_template('index.html', auth_url=authorization_url, current_page='home')
+
+
+@app.route('/people')
+def people_page():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('people.html', auth_url=authorization_url, current_page='people')
+
+
+@app.route('/register')
+def register_page():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('register.html', auth_url=authorization_url, current_page='register')
+
+
+@app.route('/conduct')
+def conduct_page():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('conduct.html', auth_url=authorization_url, current_page='conduct')
+
+
+@app.route('/instructions')
+def instructions_page():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('instructions.html', auth_url=authorization_url, current_page='instructions')
+
+
+@app.route('/contact')
+def contact_page():
+    authorization_url, state = flow.authorization_url()
+    session['state'] = state
+    return render_template('contact.html', auth_url=authorization_url, current_page='contact')
 
 
 @app.route('/authorize')
@@ -92,15 +134,17 @@ def authorize():
             return jsonify({'error': 'Failed to fetch user information.'}), 500
 
         return redirect(url_for('index'))
-    
+
     except Exception as e:
         print(f"Error during authorization: {e}")
         return "An error occurred during authorization.", 500
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
 
 @app.route('/create-event', methods=['POST'])
 def create_event():
@@ -108,13 +152,14 @@ def create_event():
         return jsonify({'error': 'Not authorized'}), 401
 
     if request.method == 'POST':
-        credentials = google.oauth2.credentials.Credentials(**session['credentials'])
+        credentials = google.oauth2.credentials.Credentials(
+            **session['credentials'])
         service = build('calendar', 'v3', credentials=credentials)
-        
+
         user_email = session.get('email')
         if not user_email:
             return jsonify({'error': 'User email not found in session.'}), 401
-        
+
         name = request.form['name']
         email = request.form['email']
         title = request.form['title']
@@ -125,8 +170,10 @@ def create_event():
         # Create a timezone
         la_timezone = pytz.timezone('America/Los_Angeles')
 
-        start_datetime = la_timezone.localize(datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M"))
-        end_datetime = la_timezone.localize(datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M"))
+        start_datetime = la_timezone.localize(
+            datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M"))
+        end_datetime = la_timezone.localize(
+            datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M"))
 
         # Format the start and end datetimes
         start_datetime_str = start_datetime.isoformat()
@@ -151,7 +198,6 @@ def create_event():
         if not has_permission:
             return jsonify({'error': 'You do not have permission to create events on this calendar.'}), 403
 
-
         data = request.json
         event = {
             'summary': title,
@@ -166,11 +212,12 @@ def create_event():
             },
             'attendees': [{'email': email}],
         }
-        
+
         event = service.events().insert(calendarId=ourCalendarID, body=event).execute()
         return jsonify(event)
-    
+
     return render_template('index.html')
+
 
 def credentials_to_dict(credentials):
     return {
@@ -181,6 +228,7 @@ def credentials_to_dict(credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes
     }
+
 
 if __name__ == '__main__':
     app.run('localhost', 5000, debug=True)
