@@ -13,12 +13,12 @@
 
         <!-- Links -->      
         <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&subset=latin,latin-ext" rel="stylesheet" type="text/css" />
-        <link rel='stylesheet' id='bootstrap-css'  href='assets/lib/bootstrap/css/bootstrap.min.css' type='text/css' media='all' />
-        <link rel='stylesheet' id='font-awesome-css'  href='assets/css/icons/font-awesome.min.css' type='text/css' media='all' />       
-        <link rel='stylesheet' id='swiper-css' href='assets/lib/swiper/css/swiper.min.css' type='text/css' media='all' />
-        <link rel='stylesheet' id='cubeportfolio-css'  href='assets/lib/cubeportfolio/css/cubeportfolio.min.css' type='text/css' media='all' />     
-
-        <link rel='stylesheet' id='main-css'  href='style.css' type='text/css' media='all' />
+        <link rel='stylesheet' id='bootstrap-css'  href="{{ url_for('static', filename='assets/lib/bootstrap/css/bootstrap.min.css') }}" type='text/css' media='all' />
+        <link rel='stylesheet' id='font-awesome-css'  href="{{ url_for('static', filename='assets/css/icons/font-awesome.min.css') }}" type='text/css' media='all' />       
+        <link rel='stylesheet' id='swiper-css' href="{{ url_for('static', filename='assets/lib/swiper/css/swiper.min.css') }}" type='text/css' media='all' />
+        <link rel='stylesheet' id='cubeportfolio-css'  href="{{ url_for('static', filename='assets/lib/cubeportfolio/css/cubeportfolio.min.css') }}" type='text/css' media='all' /> 
+        
+        <link rel='stylesheet' id='main-css' href="{{ url_for('static', filename='style.css') }}" type='text/css' media='all' />
 
         <style>
             .team-image {
@@ -36,9 +36,9 @@
             <header id="masthead" class="site-header standard sticky" role="banner" style="position: fixed; top: 0px; transition: top 0.3s ease 0s;">		
                 <div class="container">
                     <div id="site-branding">			
-                        <a class="logo-brand" href="index.html">
-                            <img class="logo" src="assets/images/logo/logo.png" alt="Logo">					                            
-                            <img class="retina-logo" src="assets/images/logo/logo2x.png" alt="Retina Logo">						                            
+                        <a class="logo-brand" href="{{ url_for('index') }}">
+                            <img class="logo" src="{{ url_for('static', filename='assets/images/logo/logo.png') }}" alt="Logo">					                            
+                            <img class="retina-logo" src="{{ url_for('static', filename='assets/images/logo/logo2x.png') }}" alt="Retina Logo">						                            
                         </a>	
                     </div><!-- .site-branding -->
                     <span id="ham-trigger-wrap">
@@ -48,19 +48,19 @@
                     </span>
                     <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Top Menu">
                         <ul id="top-menu" class="menu">
-                            <li><a href="index.html" style="color: #182B49;">Home</a>
+                            <li><a href="{{ url_for('index') }}" style="color: #182B49;">Home</a>
                             </li>
                             <li><a href="https://contextualrobotics.ucsd.edu/faculty" style="color: #182B49;">Research</a>
                             </li>
-                            <li><a href="register.html" style="color: #182B49;">Register</a>
+                            <li><a href="{{ url_for('register') }}" style="color: #182B49;">Register</a>
                             </li>
-                            <li class="current-menu-parent"><a href="people.html" style="color: #00629B;">People</a>
+                            <li class="current-menu-parent"><a href="{{ url_for('people') }}" style="color: #00629B;">People</a>
                             </li>
-                            <li><a href="conduct.html" style="color: #182B49;">Rules</a>
+                            <li><a href="{{ url_for('conduct') }}" style="color: #182B49;">Rules</a>
                             </li>
-                            <li><a href="instructions.html" style="color: #182B49;">Instructions</a>
+                            <li><a href="{{ url_for('instructions') }}" style="color: #182B49;">Instructions</a>
                             </li>
-                            <li><a href="contact.html" style="color: #182B49;">Contact</a>
+                            <li><a href="{{ url_for('contact') }}" style="color: #182B49;">Contact</a>
                             </li>
                         </ul>	
                     </nav>                                                
@@ -74,7 +74,7 @@
                             <article class="page">                                
                                 <div class="entry-content">     
                                     
-                                    <div class="container-fluid hero-section m-b-35" style="background-image: url(&#39;assets/images/icons/IMG_7996.jpg&#39;); background-position: left top;">  
+                                    <div class="container-fluid hero-section m-b-35" style="background-image: url(&#39;{{ url_for('static', filename='assets/images/icons/IMG_7996.jpg') }}&#39;); background-position: left top;">  
                                     </div>
 
                                     <div class="container m-t-32">        
@@ -98,11 +98,12 @@
                                                 Faculty 
                                             </h1>
                                         </div>
+            
                                         <div class="row">                                    
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/Christensen.jpg" class="team-image" alt="Dr. Henrik Christensen">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/Christensen.jpg') }}" class="team-image" alt="Dr. Henrik Christensen">	
                                                     </div>    
                                                     <div class="member-info">
                                                         <h6>
@@ -118,7 +119,7 @@
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/Cortes.jpg" class="team-image" alt="Dr. Jorge Cortés">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/Cortes.jpg') }}" class="team-image" alt="Dr. Jorge Cortés">	
                                                     </div>    
                                                     <div class="member-info">
                                                         <h6>
@@ -134,7 +135,7 @@
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/Atanasov.jpg" class="team-image" alt="Dr. Nikolay Atanasov">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/Atanasov.jpg') }}" class="team-image" alt="Dr. Nikolay Atanasov">	
                                                     </div>
                                                     <div class="member-info">
                                                         <h6>
@@ -163,7 +164,7 @@
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/Altawaitan.png" class="team-image" alt="Abdullah Altawaitan">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/Altawaitan.png') }}" class="team-image" alt="Abdullah Altawaitan">	
                                                     </div>    
                                                     <div class="member-info">
                                                         <h6>
@@ -179,7 +180,7 @@
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/ScottAddams.png" class="team-image" alt="Scott Addams">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/ScottAddams.png') }}" class="team-image" alt="Scott Addams">	
                                                     </div>    
                                                     <div class="member-info">
                                                         <h6>
@@ -207,7 +208,7 @@
                                             <div class="col-md-4">
                                                 <div class="team-member">
                                                     <div class="member-avatar">						
-                                                        <img src="assets/images/team/blank.jpeg" class="team-image" alt="Tyler Allen">	
+                                                        <img src="{{ url_for('static', filename='assets/images/team/blank.jpeg') }}" class="team-image" alt="Tyler Allen">	
                                                     </div>    
                                                     <div class="member-info">
                                                         <h6>
@@ -227,7 +228,7 @@
                                                         Let's work together! 								
                                                     </h2>				
                                                     <div class="btn-container solid">
-                                                        <a href="contact.html" title="GET IN TOUCH">GET IN TOUCH</a>
+                                                        <a href="{{ url_for('contact') }}" title="GET IN TOUCH">GET IN TOUCH</a>
                                                     </div>				
                                                 </div>
                                             </div>
@@ -238,7 +239,7 @@
                         </main><!-- #main -->
                     </div><!-- #primary -->                                
 
-                    <a id="gotoTop" href="./contact.html" class="scroll-top-link" data-easing="easeOutQuad" data-speed="700"><i class="fa fa-angle-up"></i></a>
+                    <a id="gotoTop" href="{{ url_for('contact') }}" class="scroll-top-link" data-easing="easeOutQuad" data-speed="700"><i class="fa fa-angle-up"></i></a>
 
                 </div><!-- #content -->
 
@@ -258,14 +259,15 @@
         <!-- Page Wrapper Ends -->
 
         <!--  Scripts -->
-        <script type='text/javascript' src='assets/js/vendor/jquery-1.12.4.min.js'></script>
-        <script type='text/javascript' src='assets/js/vendor/TweenMax.min.js'></script>        
-        <script type='text/javascript' src='assets/js/vendor/headsup.min.js'></script>        
-        <script type='text/javascript' src='assets/js/vendor/jquery.easing.min.1.3.js'></script>       
-        <script type='text/javascript' src='assets/lib/cubeportfolio/js/jquery.cubeportfolio.min.js'></script>
-        <script type='text/javascript' src='assets/lib/swiper/js/swiper.min.js'></script>        
+        <script type='text/javascript' src="{{url_for('static', filename='assets/js/vendor/jquery-1.12.4.min.js')}}"></script>
+        <script type='text/javascript' src="{{url_for('static', filename='assets/js/vendor/TweenMax.min.js')}}"></script>        
+        <script type='text/javascript' src="{{url_for('static', filename='assets/js/vendor/headsup.min.js')}}"></script>        
+        <script type='text/javascript' src="{{url_for('static', filename='assets/js/vendor/jquery.easing.min.1.3.js')}}"></script>       
+        <script type='text/javascript' src="{{url_for('static', filename='assets/lib/cubeportfolio/js/jquery.cubeportfolio.min.js')}}"></script>
+        <script type='text/javascript' src="{{url_for('static', filename='assets/lib/swiper/js/swiper.min.js')}}"></script>        
 
-        <script type='text/javascript' src='assets/js/main.js'></script>        
+        <script type='text/javascript' src="{{url_for('static', filename='assets/js/main.js')}}"></script>       
+
         <!--  Scripts Ends -->
     
 

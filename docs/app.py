@@ -51,13 +51,12 @@ def count_monthly_events(email, service):
     events = events_result.get('items', [])
     return sum(1 for event in events if any(attendee.get('email') == email for attendee in event.get('attendees', [])))
 
-def has_edit_permissions(email, service, calendar_id='primary'):
+def has_edit_permissions(email, service, calendar_id):
     try:
         acl = service.acl().list(calendarId=calendar_id).execute()
-        for entry in acl['items']:
-            if entry.get('scope', {}).get('type') == 'user' and entry['scope']['value'] == email:
-                role = entry.get('role')
-                return role in ['owner', 'writer']  
+        for entry in acl.get('items', []):
+            if entry.get('scope', {}).get('type') == 'user' and entry['scope'].get('value') == email:
+                return entry.get('role') in ['owner', 'writer']
         return False
     except Exception as e:
         print(f"Error checking permissions: {e}")
@@ -68,6 +67,26 @@ def index():
     authorization_url, state = flow.authorization_url()
     session['state'] = state
     return render_template('index.html', auth_url=authorization_url)
+
+@app.route('/people')
+def people():
+    return render_template('people.html')
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+@app.route('/conduct')
+def conduct():
+    return render_template('conduct.html')
+
+@app.route('/instructions')
+def instructions():
+    return render_template('instructions.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 
 @app.route('/authorize')
@@ -107,69 +126,71 @@ def create_event():
     if 'credentials' not in session:
         return jsonify({'error': 'Not authorized'}), 401
 
-    if request.method == 'POST':
-        credentials = google.oauth2.credentials.Credentials(**session['credentials'])
-        service = build('calendar', 'v3', credentials=credentials)
-        
-        user_email = session.get('email')
-        if not user_email:
-            return jsonify({'error': 'User email not found in session.'}), 401
-        
-        name = request.form['name']
-        email = request.form['email']
-        title = request.form['title']
-        date = request.form['date']
-        start_time = request.form['start-time']
-        end_time = request.form['end-time']
-
-        # Create a timezone
-        la_timezone = pytz.timezone('America/Los_Angeles')
-
-        start_datetime = la_timezone.localize(datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M"))
-        end_datetime = la_timezone.localize(datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M"))
-
-        # Format the start and end datetimes
-        start_datetime_str = start_datetime.isoformat()
-        end_datetime_str = end_datetime.isoformat()
-
-        try:
-            acl = service.acl().list(calendarId=ourCalendarID).execute()
-        except HttpError as e:
-            if e.resp.status == 403:
-                return jsonify({'error': 'no_permission', 'message': 'You do not have permission to access the calendar.'}), 403
-            else:
-                return jsonify({'error': 'unknown_error', 'message': 'An unknown error occurred.'}), 500
-
-        # Check if the user has the necessary permissions
-        has_permission = False
-        for entry in acl['items']:
-            if entry['scope']['type'] == 'user' and entry['scope']['value'] == user_email:
-                if entry['role'] in ['owner', 'writer']:
-                    has_permission = True
-                    break
-
-        if not has_permission:
-            return jsonify({'error': 'You do not have permission to create events on this calendar.'}), 403
-
-
-        data = request.json
-        event = {
-            'summary': title,
-            'description': f"Title: {title}\nName: {name}\nEmail: {email}",
-            'start': {
-                'dateTime': start_datetime_str,
-                'timeZone': 'America/Los_Angeles',
-            },
-            'end': {
-                'dateTime': end_datetime_str,
-                'timeZone': 'America/Los_Angeles',
-            },
-            'attendees': [{'email': email}],
-        }
-        
-        event = service.events().insert(calendarId=ourCalendarID, body=event).execute()
-        return jsonify(event)
+    credentials = google.oauth2.credentials.Credentials(**session['credentials'])
+    service = build('calendar', 'v3', credentials=credentials)
     
+    user_email = session.get('email')
+    if not user_email:
+        return jsonify({'error': 'User email not found in session.'}), 401
+    
+    name = request.form['name']
+    email = request.form['email']
+    title = request.form['title']
+    date = request.form['date']
+    start_time = request.form['start-time']
+    end_time = request.form['end-time']
+
+    # Create a timezone
+    la_timezone = pytz.timezone('America/Los_Angeles')
+
+    start_datetime = la_timezone.localize(datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M"))
+    end_datetime = la_timezone.localize(datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M"))
+
+    # Format the start and end datetimes
+    start_datetime_str = start_datetime.isoformat()
+    end_datetime_str = end_datetime.isoformat()
+
+    try:
+        acl = service.acl().list(calendarId=ourCalendarID).execute()
+    except HttpError as e:
+        if e.resp.status == 403:
+            return jsonify({'error': 'no_permission', 'message': 'You do not have permission to access the calendar.'}), 403
+        else:
+            return jsonify({'error': 'unknown_error', 'message': 'An unknown error occurred.'}), 500
+
+    # Check if the user has the necessary permissions
+    if not has_edit_permissions(user_email, service, ourCalendarID):
+        return jsonify({'error': 'You do not have permission to create events on this calendar.'}), 403
+
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    event = {
+        'summary': data.get('title'),
+        'description': f"Name: {data.get('name')}\nEmail: {data.get('email')}",
+        'start': {
+            'dateTime': data.get('date') + 'T' + data.get('start-time') + ':00',
+            'timeZone': 'America/Los_Angeles',
+        },
+        'end': {
+            'dateTime': data.get('date') + 'T' + data.get('end-time') + ':00',
+            'timeZone': 'America/Los_Angeles',
+        },
+        'attendees': [
+            {'email': data.get('email')},
+        ],
+    }
+
+    try:
+        created_event = service.events().insert(calendarId=ourCalendarID, body=event).execute()
+        return jsonify({'message': 'Event created successfully', 'event_id': created_event['id']}), 200
+    except Exception as e:
+        print(f"Error creating event: {e}")
+        return jsonify({'error': 'Failed to create the event'}), 500
+    
+
     return render_template('index.html')
 
 def credentials_to_dict(credentials):
