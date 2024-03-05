@@ -147,7 +147,7 @@
                                                                 </h1>
                                                             </div>
                                                             <div role="form" class="kraftcf">                                                    
-                                                                <form id="createEventForm" class="kraftcf-form">                                                       
+                                                                <form action="/create-event" method="post" class="kraftcf-form">                                                       
                                                                     <div class="contact-form-main">
                                                                         <div class="contact-form-fields-wrap clearfix">
                                                                             <div class="contact-form-fields">
@@ -293,41 +293,6 @@
 
             document.getElementById('start-time').value = '00:00';
             document.getElementById('end-time').value = '00:00'; 
-        </script>
-
-        <!-- Booking -->
-        <script>
-            $(document).ready(function() {
-                $('#createEventForm').submit(function(e) {
-                    e.preventDefault(); // Prevent the default form submission
-            
-                    var formData = {
-                        name: $('#name').val(),
-                        email: $('input[name="email"]').val(),
-                        title: $('input[name="title"]').val(),
-                        date: $('input[name="date"]').val(),
-                        'start-time': $('input[name="start-time"]').val(),
-                        'end-time': $('input[name="end-time"]').val(),
-                    };
-            
-                    $.ajax({
-                        url: '/create-event',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(formData),
-                        success: function(response) {
-                            console.log(response);
-                            // Handle success (e.g., showing a success message)
-                            alert('Event created successfully!');
-                        },
-                        error: function(xhr, status, error) {
-                            // Handle error
-                            console.error("Error: " + status + " " + error);
-                            alert('Failed to create the event.');
-                        }
-                    });
-                });
-            });
         </script>
     
 
